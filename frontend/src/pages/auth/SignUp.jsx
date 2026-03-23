@@ -198,7 +198,7 @@ const SignUp = () => {
         setShowHospitalDropdown(false);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/vi/auth/hospitals/resolve/', {
+            const response = await axios.post('https://hopedrop.pythonanywhere.com/api/hospitals/resolve/', {
                 place_id: hospital.id,
                 name: hospital.name,
                 lat: hospital.lat,
@@ -302,7 +302,7 @@ const SignUp = () => {
             let hospitalId = resolvedHospitalId;
 
             if (selectedHospital && !hospitalId) {
-                const response = await axios.post('http://localhost:8000/api/v1/auth/hospitals/resolve/', {
+                const response = await axios.post('https://hopedrop.pythonanywhere.com/api/hospitals/resolve/', {
                     place_id: selectedHospital.id,
                     name: selectedHospital.name,
                     lat: selectedHospital.lat,
@@ -330,7 +330,7 @@ const SignUp = () => {
                 },
             };
 
-            await axios.post('http://localhost:8000/api/v1/auth/register/', payload);
+            await axios.post('https://hopedrop.pythonanywhere.com/api/register/', payload);
 
             setSuccess(true);
             Swal.fire({

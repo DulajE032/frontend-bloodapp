@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import dayjs from "dayjs";
 import { useAuth } from '../context/auth/useAuth';
 
-const baseURL = "http://localhost:8000/api/v1/auth";
+const baseURL = "https://hopedrop.pythonanywhere.com/api/";
 
 const useAxios = () => {
     const { authTokens, setUser, setAuthTokens } = useAuth();
