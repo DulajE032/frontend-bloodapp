@@ -52,13 +52,6 @@ const LandingPage = () => {
     return (
         <div className="landing-page-new">
             {/* Emergency Banner */}
-            <div className="emergency-banner-new">
-                <div className="banner-content">
-                    <span className="pulse-dot"></span>
-                    <strong>URGENT:</strong> B+ Blood urgently required at General Hospital Colombo.
-                    <a href="tel:0110000000" className="banner-phone"><PhoneCall size={14} /> 011 000 0000</a>
-                </div>
-            </div>
 
             {/* Hero Section */}
             <section 
