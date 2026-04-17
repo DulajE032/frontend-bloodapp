@@ -31,9 +31,9 @@ export const AuthProvider = ({ children }) => {
 
     const [loading] = useState(false);
 
-    const login = async (email, password) => {
+    const login = async (identifier, password) => {
         const response = await axios.post('https://hopedrop.pythonanywhere.com/api/token/', {
-            email,
+            email: identifier,
             password,
         });
 

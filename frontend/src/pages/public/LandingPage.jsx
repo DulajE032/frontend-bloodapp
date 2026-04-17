@@ -1,15 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Activity, MapPin, Search, PhoneCall, ArrowRight, Shield, Clock } from 'lucide-react';
+import { Heart, Activity, MapPin, Search, PhoneCall, ArrowRight, Shield, Clock, ChevronDown } from 'lucide-react';
 import './LandingPage.css';
 import { LANDING } from '../../config/imageAssets';
 import { PHOTOS } from '../../config/imageAssets';
 
 const LandingPage = () => {
-    const [bloodStock] = useState({
-        "O+": "Normal", "A+": "Low", "B+": "Critical", "AB+": "Normal",
-        "O-": "Normal", "A-": "Normal", "B-": "Low", "AB-": "Normal"
-    });
+const DEFAULT_STOCK = {
+    "A+": "Normal",
+    "A-": "Normal",
+    "B+": "Normal",
+    "B-": "Normal",
+    "AB+": "Normal",
+    "AB-": "Normal",
+    "O+": "Normal",
+    "O-": "Normal",
+};
+
+const [bloodStock, setBloodStock] = useState(DEFAULT_STOCK);
+const [lastUpdated, setLastUpdated] = useState(null);
+const [stockLoading, setStockLoading] = useState(true);
+const [stockError, setStockError] = useState("");
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://hopedrop.pythonanywhere.com/api";
+
+const fetchLiveStock = async () => {
+    try {
+        setStockError("");
+        const response = await fetch(`${API_BASE}/blood/live-stock/`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const statusByType = { ...DEFAULT_STOCK };
+        (data.stocks || []).forEach((item) => {
+            if (item?.bloodType && item?.status) {
+                statusByType[item.bloodType] = item.status;
+            }
+        });
+
+        setBloodStock(statusByType);
+        setLastUpdated(data.updatedAt || null);
+    } catch (error) {
+        setStockError("Unable to load live blood stock right now.");
+        console.error("Live stock fetch failed:", error);
+    } finally {
+        setStockLoading(false);
+    }
+};
+
+useEffect(() => {
+    fetchLiveStock();
+    const intervalId = setInterval(fetchLiveStock, 60000); // refresh every 60s
+    return () => clearInterval(intervalId);
+}, []);
+
 
     // Intersection Observer for scroll animations
     useEffect(() => {
@@ -51,8 +98,6 @@ const LandingPage = () => {
     }, []);
     return (
         <div className="landing-page-new">
-            {/* Emergency Banner */}
-
             {/* Hero Section */}
             <section 
                 className="hero-section-new"
@@ -73,10 +118,18 @@ const LandingPage = () => {
 
                         {/* This is the part that centers the button */}
                         <div className="hero-actions-new">
-                            <Link to="/donor" className="btn-donate-now">
-                                DONATE NOW
+                            <Link to="/donor" className="scroll-donate-btn btn-donate-large">
+                                DONATE NOW <Heart size={18} style={{ marginLeft: '8px' }} />
                             </Link>
                         </div>
+                    </div>
+                </div>
+
+                {/* Scroll Down Signal */}
+                <div className="hero-scroll-signal">
+                    <div className="scroll-indicator" onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}>
+                        <span className="scroll-text">Scroll Down</span>
+                        <ChevronDown size={24} className="bounce-arrow" />
                     </div>
                 </div>
             </section>
@@ -156,7 +209,17 @@ const LandingPage = () => {
                             ))}
                         </div>
                         <div className="stock-footer">
-                            <span><Clock size={12} /> Updated just now</span>
+                            <span>
+                                <Clock size={12} />
+                                {" "}
+                                {stockLoading
+                                    ? "Loading..."
+                                    : lastUpdated
+                                        ? `Updated ${new Date(lastUpdated).toLocaleTimeString()}`
+                                        : "Update time unavailable"}
+                            </span>
+                            {stockError && <p className="stock-error">{stockError}</p>}
+
                             <Link to="/donor">View Details</Link>
                         </div>
                     </div>

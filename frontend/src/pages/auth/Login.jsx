@@ -1,90 +1,44 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/swalUtils';
 import { useAuth } from '../../context/auth/useAuth';
 import './Login.css';
 
-/* ── Shared SweetAlert2 theme ─────────────────────────────── */
-const swalBase = {
-    customClass: {
-        popup:          'swal-hopedrop-popup',
-        title:          'swal-hopedrop-title',
-        htmlContainer:  'swal-hopedrop-html',
-        confirmButton:  'swal-hopedrop-confirm',
-        icon:           'swal-hopedrop-icon',
-    },
-    width: 'clamp(260px, 90vw, 380px)',
-    padding: 'clamp(1.2rem, 4vw, 2rem)',
-};
-
 const Login = () => {
-    const [email, setEmail] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const { login } = useAuth();
+    const { login: loginUser } = useAuth();
     const navigate = useNavigate();
 
-    // ✅ Fixed: added "async" because we use "await" inside
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        // ✅ Fixed: validation with Swal INSIDE the if block
-        if (!email || !password) {
+        if (!identifier || !password) {
             setError('Please fill in all fields');
-            Swal.fire({
-                ...swalBase,
-                position: 'top-end',
-                icon: 'warning',
-                title: 'Missing Fields',
-                text: 'Please fill in all required fields.',
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-                toast: true,
-            });
-            return;  // ← stops here if fields are empty
+            showWarningToast('Missing Fields', 'Please fill in all required fields.');
+            return;
         }
 
         setLoading(true);
 
         try {
-            // ✅ login() now calls the Django API internally (inside AuthContext)
-            const userData = await login(email, password);
+            const userData = await loginUser(identifier, password);
 
-            // Success toast
-            Swal.fire({
-                ...swalBase,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Login Successful!',
-                text: `Welcome back, ${userData.username || email.split('@')[0]}.`,
-                showConfirmButton: false,
-                timer: 1800,
-                timerProgressBar: true,
-                toast: true,
-            }).then(() => {
+            showSuccessToast(
+                'Login Successful!',
+                `Welcome back, ${userData.username || identifier.split('@')[0]}.`,
+            ).then(() => {
                 navigate(`/${userData.role || 'donor'}`, { replace: true });
             });
-
         } catch (error) {
-            // ❌ Django returned 401 or other error
             const message = error.response?.data?.detail || 'Invalid credentials';
             setError(message);
-            Swal.fire({
-                ...swalBase,
-                position: 'top-end',
-                icon: 'error',
-                title: 'Login Failed',
-                text: message,
-                showConfirmButton: false,
-                timer: 2500,
-                timerProgressBar: true,
-                toast: true,
-            });
+            showErrorToast('Login Failed', message);
         } finally {
             setLoading(false);
         }
@@ -102,22 +56,21 @@ const Login = () => {
 
                 <div className="auth-header">
                     <h2>Welcome Back</h2>
-                    <p>Login to access your HOPEDROP dashboard</p>
                 </div>
 
                 {error && <div className="auth-error-message">⚠️ {error}</div>}
 
                 <form className="auth-form" onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label htmlFor="email">Email or Username</label>
+                        <label htmlFor="login">Email or Username</label>
                         <input
                             type="text"
-                            id="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            id="login"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             disabled={loading}
-                            className={error && !email ? 'error-input' : ''}
+                            className={error && !identifier ? 'error-input' : ''}
+                            placeholder="Enter email or username"
                         />
                     </div>
 
@@ -127,7 +80,7 @@ const Login = () => {
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 id="password"
-                                placeholder="Enter your password"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={loading}
